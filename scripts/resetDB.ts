@@ -1,3 +1,3 @@
-import { resetDatabase } from "../db";
+import { resetDatabase } from "../plain/db";
 
 resetDatabase();

@@ -1,6 +1,6 @@
 import dotenv from "dotenv";
-import { initializeDatabase, pool, resetDatabase } from "./db";
-import { storeDocument, findSimilarDocuments } from "./embeddings.ts";
+import { initializeDatabase, pool, resetDatabase } from "./plain/db.ts";
+import { storeDocument, findSimilarDocuments } from "./plain/embeddings.ts";
 import openai from "openai";
 
 dotenv.config();

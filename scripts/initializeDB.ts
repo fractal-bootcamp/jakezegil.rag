@@ -1,3 +1,3 @@
-import { initializeDatabase } from "../db";
+import { initializeDatabase } from "../plain/db";
 
 initializeDatabase();
