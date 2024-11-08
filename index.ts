@@ -1,52 +1,81 @@
-import dotenv from 'dotenv';
-import { initializeDatabase } from './db';
-import { storeDocument, findSimilarDocuments } from './embeddings.ts';
+import dotenv from "dotenv";
+import { initializeDatabase, pool, resetDatabase } from "./db";
+import { storeDocument, findSimilarDocuments } from "./embeddings.ts";
+import openai from "openai";
 
 dotenv.config();
+
+const openaiClient = new openai({
+  apiKey: process.env.OPENAI_API_KEY,
+});
 
 async function main() {
   // Initialize database
   await initializeDatabase();
-  
+  await resetDatabase();
+
   // Example documents
   const documents = [
-    "TypeScript is a programming language developed by Microsoft",
-    "JavaScript is a widely-used programming language",
-    "Python is known for its simplicity and readability",
-    "Rust is a systems programming language focused on safety",
-    "Go is developed by Google for cloud and networking",
-    "Java was originally developed by Sun Microsystems, now owned by Oracle",
-    "Swift is Apple's programming language for iOS development",
-    "Kotlin is developed by JetBrains and officially supported by Google for Android",
-    "C# is Microsoft's language for the .NET ecosystem",
-    "PHP powers a large portion of web servers and was created by Rasmus Lerdorf",
-    "Ruby was created by Yukihiro Matsumoto with a focus on programmer happiness",
-    "Scala combines object-oriented and functional programming on the JVM",
-    "Dart is Google's language for building multi-platform applications",
-    "F# is Microsoft's functional programming language",
-    "Julia is designed for numerical analysis and computational science",
-    "Elixir runs on the Erlang VM and is great for concurrent systems",
-    "Haskell is a purely functional programming language",
-    "R is popular for statistical computing and data analysis",
-    "COBOL is still used in many legacy business systems",
-    "Assembly language provides direct hardware access"
+    "The quantum mechanical properties of superconducting materials enable zero electrical resistance at extremely low temperatures.",
+    "A caltech swag store that sells orange kitten plushies of the quantum mechanical variety.",
+    "A fluffy orange kitten played with a ball of yarn while purring contentedly in a warm sunbeam.",
+    "The principles of quantum entanglement suggest particles can remain connected regardless of distance.",
+    "An orange tabby cat lounged lazily on the windowsill of the quantum physics laboratory.",
+    "Researchers discovered a new superconducting material that works at room temperature.",
+    "The campus bookstore started selling quantum physics themed plush toys and accessories.",
+    "A ginger cat wandered through the university halls, stopping to nap in the physics department.",
+    "String theory proposes the universe consists of tiny vibrating strings in multiple dimensions.",
+    "The quantum computing lab adopted an orange shelter cat as their unofficial mascot.",
+    "Dark matter's gravitational effects can be observed but the substance remains undetectable.",
+    "Students decorated the physics lounge with cat-themed quantum mechanics posters.",
+    "The Heisenberg uncertainty principle states position and momentum cannot be precisely known.",
+    "An orange kitten watched intently as the professor drew quantum diagrams on the whiteboard.",
+    "Scientists achieved quantum teleportation of information between two distant particles.",
+    "The department's orange cat seemed fascinated by the quantum interference patterns.",
+    "Quantum tunneling allows particles to pass through barriers that classical physics prohibits.",
+    "A ginger kitten pawed curiously at the holographic display of atomic orbitals.",
   ];
-  
+
   // Store documents
-  console.log('Storing documents...');
+  console.log("Storing documents...");
   for (const doc of documents) {
     await storeDocument(doc);
   }
-  
+
   // Example query
-  const query = "What programming languages are built by big tech companies?";
-  console.log('\nQuerying:', query);
-  
-  const similarDocs = await findSimilarDocuments(query);
-  console.log('\nSimilar documents:');
+  const query = "I need to buy food for the quantum computing lab's";
+  console.log("\nQuerying:", query);
+
+  const similarDocs = await findSimilarDocuments(query, 4);
+  console.log("\nSimilar documents:");
   similarDocs.forEach((doc, i) => {
     console.log(`${i + 1}. ${doc}`);
   });
+
+  // Complete the query using OpenAI
+  const completion = await openaiClient.chat.completions.create({
+    model: "gpt-4o-mini",
+    messages: [
+      {
+        role: "system",
+        content:
+          "You are a helpful assistant. Based on the context provided, complete the user's query in a natural way.",
+      },
+      {
+        role: "user",
+        content: `Complete this query naturally based on this context:
+Query: "${query}"
+Context:
+${similarDocs.join("\n")}`,
+      },
+    ],
+  });
+
+  console.log("\nCompleted query:");
+  console.log(`"${query}${completion.choices[0].message.content}"`);
+
+  // Close the database connection
+  await pool.end();
 }
 
 main().catch(console.error);
